@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Purity Events — Contract Builder</title>
+<style>
+  :root {
+    --bg: #FBF6F3;
+    --surface: #FFFFFF;
+    --surface-soft: #FBF0F1;
+    --blush: #F1D3D8;
+    --blush-deep: #C9808F;
+    --sage: #C9D6C2;
+    --sage-deep: #7C9270;
+    --ink: #3B3238;
+    --ink-soft: #7A6E72;
+    --border: #EADFE0;
+    --font-display: Georgia, 'Iowan Old Style', serif;
+    --font-body: -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); line-height: 1.5; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 32px 24px 96px; }
+
+  header.brand { text-align: center; padding: 28px 16px 20px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+  header.brand h1 { font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: 2.2rem; color: var(--blush-deep); margin: 0 0 4px; }
+  header.brand p { margin: 0; color: var(--ink-soft); font-size: 0.92rem; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 26px; margin-bottom: 18px; }
+  .card h2 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--ink); margin: 0 0 3px; }
+  .card .card-sub { color: var(--ink-soft); font-size: 0.85rem; margin: 0 0 16px; }
+
+  .grid { display: grid; gap: 12px; }
+  .cols-2 { grid-template-columns: 1fr 1fr; }
+  .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 640px) { .cols-2, .cols-3 { grid-template-columns: 1fr; } }
+
+  label { display: block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 4px; font-weight: 600; }
+  .field { margin-bottom: 2px; }
+
+  input[type="text"], input[type="date"], input[type="time"], input[type="number"],
+  input[type="email"], input[type="tel"], select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 8px; background: #FFFDFC; color: var(--ink);
+    font-family: var(--font-body); font-size: 0.9rem;
+  }
+  textarea { resize: vertical; min-height: 68px; }
+  input:focus, select:focus, textarea:focus {
+    outline: none; border-color: var(--blush-deep);
+    box-shadow: 0 0 0 3px rgba(201,128,143,0.15);
+  }
+
+  /* ---- Type toggle ---- */
+  .type-toggle { display: flex; gap: 10px; margin-bottom: 18px; }
+  .type-toggle button {
+    flex: 1; padding: 12px; border-radius: var(--radius);
+    border: 1.5px solid var(--border); background: var(--surface);
+    color: var(--ink-soft); font-family: var(--font-body); font-weight: 600; font-size: 0.92rem; cursor: pointer;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .type-toggle button.active { border-color: var(--blush-deep); background: var(--surface-soft); color: var(--blush-deep); }
+
+  [data-large-only="true"] { display: none; }
+  body.type-large [data-large-only="true"] { display: block; }
+  body.type-large .grid[data-large-only="true"] { display: grid; }
+
+  /* ---- Template bar ---- */
+  .template-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  }
+  .template-bar label { margin: 0; font-size: 0.8rem; color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  .template-bar select { flex: 1; min-width: 160px; max-width: 280px; }
+  .tbar-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ---- Buttons ---- */
+  .btn { padding: 11px 22px; border-radius: 999px; border: none; font-weight: 700; font-size: 0.9rem; cursor: pointer; font-family: var(--font-body); transition: opacity .15s; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .btn-primary { background: var(--blush-deep); color: #fff; }
+  .btn-primary:hover:not(:disabled) { opacity: .88; }
+  .btn-secondary { background: var(--sage); color: #24331d; }
+  .btn-secondary:hover:not(:disabled) { opacity: .85; }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
+  .btn-ghost:hover { border-color: var(--blush-deep); color: var(--blush-deep); }
+  .btn-danger { background: #FFF0F0; border: 1px solid #F5B8B8; color: #C0392B; }
+  .btn-sm { padding: 7px 14px; font-size: 0.78rem; }
+  .btn-add { background: var(--surface-soft); border: 1px dashed var(--blush-deep); color: var(--blush-deep); border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 0.82rem; cursor: pointer; }
+
+  .actions { display: flex; gap: 10px; justify-content: center; margin: 26px 0; flex-wrap: wrap; }
+  .hint { color: var(--ink-soft); font-size: 0.78rem; margin-top: 5px; }
+
+  /* ---- Items table ---- */
+  table.items { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  table.items th { text-align: left; font-size: 0.75rem; color: var(--ink-soft); padding: 5px 7px; border-bottom: 1px solid var(--border); }
+  table.items td { padding: 5px 5px; vertical-align: top; }
+  table.items input, table.items select { font-size: 0.85rem; padding: 6px 7px; }
+  .row-remove { background: none; border: none; color: var(--blush-deep); font-size: 1.05rem; cursor: pointer; padding: 5px; }
+
+  /* ---- Custom sections ---- */
+  .custom-section-row {
+    background: #FDFAFA; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; margin-bottom: 10px; position: relative;
+  }
+  .custom-section-row .cs-handle { cursor: grab; color: #ccc; font-size: 1.1rem; margin-right: 8px; user-select: none; }
+  .custom-section-row.drag-over { border-color: var(--blush-deep); box-shadow: 0 0 0 2px rgba(201,128,143,0.2); }
+  .cs-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .cs-header input { flex: 1; font-weight: 600; }
+
+  /* ---- Saved contracts ---- */
+  .saved-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 7px; background: var(--surface-soft); }
+  .saved-item .meta { font-size: 0.82rem; }
+  .saved-item .meta strong { color: var(--ink); }
+  .saved-item .meta span { color: var(--ink-soft); display: block; font-size: 0.75rem; margin-top: 1px; }
+  .saved-item .saved-actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .saved-item button { border: 1px solid var(--border); background: #fff; border-radius: 6px; padding: 5px 9px; font-size: 0.75rem; cursor: pointer; color: var(--ink); }
+  .saved-item button.danger { color: var(--blush-deep); border-color: var(--blush-deep); }
+  .empty-note { color: var(--ink-soft); font-size: 0.82rem; font-style: italic; }
+
+  /* ---- Preview / contract ---- */
+  #previewSection { display: none; }
+  #contractPreview {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 40px 48px; font-family: Georgia, 'Times New Roman', serif;
+    color: #222; line-height: 1.7; font-size: 0.95rem;
+  }
+  #contractPreview h2 { font-family: var(--font-display); text-align: center; margin-bottom: 2px; }
+  #contractPreview .sub-center { text-align: center; color: #555; margin-bottom: 20px; font-size: 0.85rem; }
+  #contractPreview h3 { font-size: 1rem; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-top: 26px; }
+  #contractPreview table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  #contractPreview table th, #contractPreview table td { border: 1px solid #ccc; padding: 6px 8px; font-size: 0.87rem; text-align: left; }
+  #contractPreview .sign-block { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 40px; }
+  #contractPreview .sign-line { border-top: 1px solid #333; margin-top: 40px; padding-top: 4px; font-size: 0.8rem; color: #555; }
+
+  /* Edit mode */
+  #contractPreview.edit-mode { outline: 2px dashed var(--blush-deep); outline-offset: 4px; }
+  #contractPreview.edit-mode [contenteditable] { outline: 1px dashed #F1D3D8; border-radius: 3px; min-height: 1em; cursor: text; }
+  #contractPreview.edit-mode [contenteditable]:focus { outline: 2px solid var(--blush-deep); background: #FFFBFC; }
+  .edit-mode-badge {
+    display: none; text-align: center; margin-bottom: 10px;
+    font-size: 0.8rem; color: var(--blush-deep); font-weight: 600;
+    background: var(--surface-soft); border: 1px solid var(--blush);
+    border-radius: 8px; padding: 6px 12px;
+  }
+  #contractPreview.edit-mode ~ .edit-mode-badge { display: block; }
+  .edit-banner {
+    background: var(--surface-soft); border: 1px solid var(--blush);
+    border-radius: 8px; padding: 10px 16px; margin-bottom: 14px;
+    display: none; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .edit-banner.visible { display: flex; }
+  .edit-banner span { font-size: 0.82rem; color: var(--blush-deep); font-weight: 600; flex: 1; }
+
+  /* Folder status */
+  #folderStatusRow { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+
+  @media print {
+    header.brand, .card, .actions, .hint, #backToFormBtn, .edit-banner, #previewToolbar { display: none !important; }
+    #previewSection { display: block !important; }
+    #contractPreview { border: none; padding: 0; outline: none !important; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+
+<body class="type-large">
+<div class="wrap">
+
+<header class="brand">
+  <h1>Purity Events</h1>
+  <p>Contract Builder — internal tool</p>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════ FORM ═══ -->
+<div id="formSection">
+
+  <!-- Type toggle -->
+  <div class="type-toggle">
+    <button type="button" id="btnTypeLarge" class="active" onclick="setContractType('large')">Large Wedding</button>
+    <button type="button" id="btnTypeSmall" onclick="setContractType('small')">Small Event</button>
+  </div>
+
+  <!-- Template bar -->
+  <div class="template-bar">
+    <label for="templateSelect">📋 Template:</label>
+    <select id="templateSelect" onchange="onTemplateSelect()"></select>
+    <div class="tbar-actions">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="loadSelectedTemplate()">Load</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="promptSaveTemplate()">💾 Save as Template</button>
+      <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedTemplate()">Delete</button>
+    </div>
+  </div>
+
+  <!-- Saved contracts panel -->
+  <div class="card" style="padding:12px 18px;">
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
+      <button type="button" class="btn-add" onclick="toggleSavedPanel()">
+        📁 Saved Contracts (<span id="savedCount">0</span>)
+      </button>
+      <div id="folderStatusRow">
+        <span id="folderStatusText" class="hint" style="margin:0;">Checking folder…</span>
+        <button type="button" class="btn-add btn-sm" id="folderConnectBtn" onclick="chooseFolder()">Choose folder</button>
+      </div>
+    </div>
+    <div id="savedPanel" style="display:none; margin-top:12px;">
+      <p class="card-sub" style="margin-bottom:8px;">Saved in this browser. Download for long-term copies.</p>
+      <div id="savedList"></div>
+    </div>
+  </div>
+
+  <!-- Client & Event -->
+  <div class="card">
+    <h2>Client &amp; Event Details</h2>
+    <p class="card-sub">Appears at the top of the contract.</p>
+    <div class="grid cols-2">
+      <div class="field"><label>Client full name</label><input type="text" id="clientName" placeholder="e.g. Priya &amp; Alex Sharma" /></div>
+      <div class="field"><label>Client phone</label><input type="tel" id="clientPhone" placeholder="(614) 555-0123" /></div>
+      <div class="field"><label>Client email</label><input type="email" id="clientEmail" placeholder="name@email.com" /></div>
+      <div class="field"><label>Event type</label><select id="eventTypeSelect"></select></div>
+      <div class="field"><label>Venue name</label><input type="text" id="venueName" placeholder="e.g. The Grand Hall" /></div>
+      <div class="field"><label>Venue address</label><input type="text" id="venueAddress" placeholder="Street, City, State" /></div>
+    </div>
+  </div>
+
+  <!-- Timing -->
+  <div class="card">
+    <h2>Date &amp; Timing</h2>
+    <p class="card-sub">Event timing and decor set-up / pick-up window.</p>
+    <label style="margin-bottom:7px; color:var(--ink); font-size:0.88rem;">Event</label>
+    <div class="grid cols-2" style="margin-bottom:18px;">
+      <div class="field"><label>Event date</label><input type="date" id="eventDate" /></div>
+      <div class="field"><label>Event start time</label><input type="time" id="eventStart" /></div>
+    </div>
+    <label style="margin-bottom:7px; color:var(--ink); font-size:0.88rem;">Decor Set-Up &amp; Pick-Up</label>
+    <div class="grid cols-2">
+      <div class="field"><label>Decor set-up date</label><input type="date" id="decorDate" /></div>
+      <div class="field"><label>Set-up time</label><input type="time" id="decorSetupTime" /></div>
+      <div class="field"><label>Decor pick-up date</label><input type="date" id="decorPickupDate" /></div>
+      <div class="field"><label>Pick-up time</label><input type="time" id="decorPickupTime" /></div>
+    </div>
+  </div>
+
+  <!-- Decor -->
+  <div class="card">
+    <h2>Decor Package</h2>
+    <p class="card-sub">Package, theme, and itemized decor list.</p>
+    <div class="grid cols-2">
+      <div class="field"><label>Decor package</label><select id="decorPackage"></select></div>
+      <div class="field"><label>Color palette / theme</label><input type="text" id="colorPalette" placeholder="e.g. Blush, ivory &amp; sage" /></div>
+    </div>
+    <div data-large-only="true" style="margin-top:6px;">
+      <label>Agreed inspiration photos</label>
+      <textarea id="inspoNote" placeholder="Reference inspo images agreed on with the client."></textarea>
+    </div>
+    <label style="margin-top:14px; display:block;">Itemized decor list</label>
+    <table class="items" id="itemsTable">
+      <thead><tr><th style="width:34%">Item</th><th style="width:14%">Qty</th><th style="width:38%">Notes / color</th><th style="width:14%"></th></tr></thead>
+      <tbody id="itemsTbody"></tbody>
+    </table>
+    <button type="button" class="btn-add" onclick="addItemRow()">+ Add item</button>
+  </div>
+
+  <!-- Role -->
+  <div class="card">
+    <h2>Role &amp; Responsibilities</h2>
+    <p class="card-sub">What Purity Events will handle. Edit freely per client.</p>
+    <textarea id="roleText" style="min-height:100px;"></textarea>
+  </div>
+
+  <!-- Pricing -->
+  <div class="card">
+    <h2>Pricing &amp; Payment</h2>
+    <p class="card-sub">Deposit is always non-refundable. Final balance due at least one week before the event.</p>
+    <div class="grid cols-3">
+      <div class="field"><label>Total event price ($)</label><input type="number" id="totalPrice" min="0" step="1" placeholder="0" /></div>
+      <div class="field"><label>Deposit type</label>
+        <select id="depositType">
+          <option value="percent">Percentage of total</option>
+          <option value="fixed">Fixed amount</option>
+        </select>
+      </div>
+      <div class="field"><label for="depositValue" id="depositValueLabel">Deposit % (default 30)</label><input type="number" id="depositValue" min="0" step="1" value="30" /></div>
+      <div class="field"><label>Final balance due date</label><input type="date" id="balanceDueDate" /></div>
+      <div class="field"><label>Overtime rate ($ / hr)</label><input type="number" id="overtimeRate" min="0" step="1" placeholder="e.g. 75" /></div>
+      <div class="field"><label>Travel / delivery fee ($)</label><input type="number" id="travelFee" min="0" step="1" placeholder="0" /></div>
+    </div>
+    <p class="hint">Auto-fill balance date to 7 days before event:</p>
+    <button type="button" class="btn-add" onclick="autofillBalanceDate()">Auto-fill balance date</button>
+  </div>
+
+  <!-- ═══════════ CUSTOM SECTIONS ═══════════ -->
+  <div class="card">
+    <h2>Custom Contract Sections</h2>
+    <p class="card-sub">Add extra sections that will appear at the end of the contract — special agreements, add-ons, specific terms, anything you need. Drag to reorder.</p>
+    <div id="customSectionsList"></div>
+    <button type="button" class="btn-add" onclick="addCustomSection()">+ Add Section</button>
+  </div>
+
+  <!-- ═══════════ EDITABLE CLAUSES ═══════════ -->
+  <div class="card">
+    <h2>Contract Clause Wording</h2>
+    <p class="card-sub">Edit the exact legal wording that will appear in the contract. Changes here apply to this contract only — save as a template to reuse.</p>
+
+    <div style="margin-bottom:14px;">
+      <label>Deposit clause <span class="hint" style="display:inline;">(use <code>{{depositAmount}}</code> for the deposit figure)</span></label>
+      <textarea id="clauseDeposit" style="min-height:80px;"></textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label>Final payment clause <span class="hint" style="display:inline;">(use <code>{{balanceAmount}}</code> and <code>{{balanceDueDate}}</code>)</span></label>
+      <textarea id="clauseFinalPayment" style="min-height:80px;"></textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label>Overtime clause <span class="hint" style="display:inline;">(use <code>{{overtimeRate}}</code>)</span></label>
+      <textarea id="clauseOvertime" style="min-height:80px;"></textarea>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label>Damage &amp; care clause</label>
+      <textarea id="clauseDamage" style="min-height:100px;"></textarea>
+    </div>
+    <div>
+      <label>Liability clause</label>
+      <textarea id="clauseLiability" style="min-height:100px;"></textarea>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn-primary" onclick="generateContract()">Generate Contract</button>
+    <button type="button" class="btn btn-secondary" onclick="promptSaveTemplate()">💾 Save as Template</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ PREVIEW ═══ -->
+<div id="previewSection">
+  <div id="previewToolbar" class="actions" style="margin-bottom:10px;">
+    <button type="button" class="btn btn-secondary" id="backToFormBtn" onclick="backToForm()">← Edit Form</button>
+    <button type="button" class="btn btn-ghost" id="toggleEditBtn" onclick="toggleEditMode()">✏️ Edit Contract Text</button>
+    <button type="button" class="btn btn-secondary" onclick="promptSaveTemplate()">💾 Save as Template</button>
+    <button type="button" class="btn btn-secondary" onclick="startNewContract()">New Contract</button>
+    <button type="button" class="btn btn-ghost" onclick="downloadCurrentRecord()">⬇ Download</button>
+    <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print / PDF</button>
+  </div>
+
+  <div class="edit-banner" id="editBanner">
+    <span>✏️ Edit mode — click any text in the contract to edit it directly</span>
+    <button type="button" class="btn btn-primary btn-sm" onclick="toggleEditMode()">✓ Done Editing</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="promptSaveTemplate()">💾 Save as Template</button>
+  </div>
+
+  <p class="hint" style="text-align:center;" id="autoSaveNote"></p>
+  <p class="hint" style="text-align:center;">To save as PDF: Print → More settings → turn off "Headers and footers".</p>
+  <div id="contractPreview"></div>
+</div>
+
+</div><!-- /.wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CONFIG — default clause text and dropdown options
+   ═══════════════════════════════════════════════════════════════════ */
+const DEFAULT_CONFIG = {
+  eventTypes: [
+    "Wedding","Wedding Reception","Engagement Ceremony","Mehendi / Sangeet",
+    "Haldi","Baby Shower","Birthday","Anniversary","Corporate Event",
+    "Other Cultural Celebration"
+  ],
+  decorPackages: ["Classic","Elegant","Luxe","Custom / Build Your Own"],
+  itemOptions: [
+    "Tablecloths","Chair covers","Chair sashes / bows","Ceremony arch",
+    "Backdrop","Centerpieces","Fresh florals","Faux florals","Draping / fabric",
+    "Aisle runner","Lighting","Signage","Candle décor","Other (describe in notes)"
+  ],
+  clauses: {
+    defaultRole:
+      "Purity Events will design, deliver, set up, and tear down the agreed decor package " +
+      "for the client's event within the time windows listed above. This includes coordinating " +
+      "item placement with the venue, styling per the agreed theme and inspiration photos, and " +
+      "removing all Purity Events property at the end of the tear-down window.",
+    deposit:
+      "A non-refundable deposit of {{depositAmount}} is due at the time this contract is signed " +
+      "to reserve the event date. This deposit is non-refundable under any circumstances, " +
+      "including client cancellation, rescheduling, or change of plans.",
+    finalPayment:
+      "The remaining balance of {{balanceAmount}} is due in full no later than {{balanceDueDate}}, " +
+      "which is at least one week before the event date. Purity Events is not obligated to set up " +
+      "decor if the final balance has not been received by this date.",
+    overtime:
+      "If the event, set-up, or tear-down runs longer than the times agreed above at the client's " +
+      "request or due to circumstances within the client's control, additional time will be billed " +
+      "at {{overtimeRate}} per hour, due at the time of service or added to the final invoice.",
+    damage:
+      "The client is responsible for the decor items provided by Purity Events for the duration " +
+      "of the event. Minor wear and tear — such as washable food or drink stains on tablecloths " +
+      "and chair covers — is expected and is not charged to the client. However, the client is " +
+      "financially responsible for the full repair or replacement cost of any major damage to " +
+      "florals, fabrics, stands, structures, or any other decor item that cannot be cleaned or " +
+      "repaired, however caused, during the rental period.",
+    liability:
+      "All decor items provided by Purity Events are for display purposes only and must remain " +
+      "in the exact location where they were originally set up. Decor items may not be moved, " +
+      "repositioned, climbed on, leaned on, or used for any purpose other than display. So long " +
+      "as decor items remain in their original placement, Purity Events is not liable for any " +
+      "injury, loss, or damage arising from their use. If a decor item is moved or used outside " +
+      "of its intended display purpose by the client, a guest, or any third party, full liability " +
+      "transfers to the client."
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════════════════ */
+let itemRowCount = 0;
+let csRowCount = 0;
+let currentContractHTML = "";
+let currentRecordFilename = "purity-events-contract.html";
+let currentEditingId = null;
+let editModeActive = false;
+let csDragItem = null;
+
+/* ═══════════════════════════════════════════════════════════════════
+   STORAGE — saved contracts
+   ═══════════════════════════════════════════════════════════════════ */
+const STORAGE_KEY = "purityEventsContracts";
+const TEMPLATES_KEY = "purityEventsTemplates_v2";
+
+function loadRecords() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch { return []; }
+}
+function persistRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
+
+function upsertRecord({ id, clientName, eventDate, contractType, totalPrice, html, filename, formData }) {
+  const records = loadRecords();
+  const now = new Date().toLocaleString("en-US");
+  const idx = id ? records.findIndex(r => r.id === id) : -1;
+  if (idx > -1) {
+    records[idx] = { ...records[idx], clientName: clientName||"Unnamed", eventDate: eventDate||"No date", contractType, totalPrice, filename, html, formData, updatedAt: now };
+    persistRecords(records); renderSavedList(); return records[idx].id;
+  }
+  const rec = { id: Date.now(), clientName: clientName||"Unnamed", eventDate: eventDate||"No date", contractType, totalPrice, filename, html, formData, savedAt: now, updatedAt: now };
+  records.unshift(rec); persistRecords(records); renderSavedList(); return rec.id;
+}
+
+function deleteRecord(id) {
+  if (!confirm("Delete this saved contract?")) return;
+  persistRecords(loadRecords().filter(r => r.id !== id));
+  renderSavedList();
+  if (currentEditingId === id) currentEditingId = null;
+}
+
+function viewRecord(id) {
+  const r = loadRecords().find(r => r.id === id); if (!r) return;
+  currentContractHTML = r.html; currentRecordFilename = r.filename; currentEditingId = null;
+  document.getElementById("contractPreview").innerHTML = r.html;
+  document.getElementById("formSection").style.display = "none";
+  document.getElementById("previewSection").style.display = "block";
+  document.getElementById("savedPanel").style.display = "none";
+  if (editModeActive) toggleEditMode();
+  window.scrollTo(0,0);
+}
+
+function editRecord(id) {
+  const r = loadRecords().find(r => r.id === id);
+  if (!r || !r.formData) { alert("This contract was saved before editing was supported — you can View or Download it."); return; }
+  currentEditingId = id;
+  populateFormData(r.formData);
+  document.getElementById("previewSection").style.display = "none";
+  document.getElementById("formSection").style.display = "block";
+  document.getElementById("savedPanel").style.display = "none";
+  window.scrollTo(0,0);
+}
+
+function toggleSavedPanel() {
+  const p = document.getElementById("savedPanel");
+  p.style.display = p.style.display !== "none" ? "none" : "block";
+  if (p.style.display !== "none") renderSavedList();
+}
+
+function renderSavedList() {
+  const records = loadRecords();
+  document.getElementById("savedCount").textContent = records.length;
+  const el = document.getElementById("savedList");
+  if (!records.length) { el.innerHTML = `<p class="empty-note">No contracts yet.</p>`; return; }
+  el.innerHTML = records.map(r => `
+    <div class="saved-item">
+      <div class="meta"><strong>${r.clientName}</strong> — ${r.contractType === "large" ? "Wedding" : "Small Event"}
+        <span>${r.eventDate} • ${money(r.totalPrice)} • ${r.updatedAt||r.savedAt}</span></div>
+      <div class="saved-actions">
+        <button onclick="viewRecord(${r.id})">View</button>
+        <button onclick="editRecord(${r.id})">Edit</button>
+        <button onclick="downloadRecordById(${r.id})">Download</button>
+        <button class="danger" onclick="deleteRecord(${r.id})">Delete</button>
+      </div>
+    </div>`).join("");
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TEMPLATE STORAGE
+   ═══════════════════════════════════════════════════════════════════ */
+function loadTemplates() {
+  try { return JSON.parse(localStorage.getItem(TEMPLATES_KEY) || "[]"); } catch { return []; }
+}
+function persistTemplates(t) { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(t)); }
+
+function renderTemplateSelect() {
+  const sel = document.getElementById("templateSelect");
+  const templates = loadTemplates();
+  sel.innerHTML = `<option value="">— Default (blank form) —</option>` +
+    templates.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+}
+
+function onTemplateSelect() { /* just selection, load on button click */ }
+
+function loadSelectedTemplate() {
+  const id = document.getElementById("templateSelect").value;
+  if (!id) { resetForm(); return; }
+  const templates = loadTemplates();
+  const t = templates.find(t => t.id == id);
+  if (!t) return;
+  populateFormData(t.formData);
+  alert(`Template "${t.name}" loaded.`);
+}
+
+function promptSaveTemplate() {
+  const name = prompt("Template name (e.g. 'Standard Wedding', 'Baby Shower Base'):");
+  if (!name || !name.trim()) return;
+  const templates = loadTemplates();
+  const newT = { id: Date.now(), name: name.trim(), formData: collectFormData(), savedAt: new Date().toLocaleString("en-US") };
+  templates.unshift(newT);
+  persistTemplates(templates);
+  renderTemplateSelect();
+  document.getElementById("templateSelect").value = newT.id;
+  alert(`Template "${newT.name}" saved! You can load it anytime from the Template dropdown.`);
+}
+
+function deleteSelectedTemplate() {
+  const id = document.getElementById("templateSelect").value;
+  if (!id) { alert("Select a saved template to delete."); return; }
+  const templates = loadTemplates();
+  const t = templates.find(t => t.id == id);
+  if (!t) return;
+  if (!confirm(`Delete template "${t.name}"?`)) return;
+  persistTemplates(templates.filter(t => t.id != id));
+  renderTemplateSelect();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOCAL FOLDER (Chrome/Edge only)
+   ═══════════════════════════════════════════════════════════════════ */
+let folderHandle = null;
+const folderSupported = "showDirectoryPicker" in window;
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open("purityEventsFS", 1);
+    req.onupgradeneeded = () => req.result.createObjectStore("handles");
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function idbSave(handle) {
+  const db = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("handles","readwrite");
+    tx.objectStore("handles").put(handle,"contractsFolder");
+    tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbGet() {
+  const db = await idbOpen();
+  return new Promise(resolve => {
+    const tx = db.transaction("handles","readonly");
+    const req = tx.objectStore("handles").get("contractsFolder");
+    req.onsuccess = () => resolve(req.result||null); req.onerror = () => resolve(null);
+  });
+}
+async function ensurePerm(handle) {
+  const opts = {mode:"readwrite"};
+  if ((await handle.queryPermission(opts)) === "granted") return true;
+  return (await handle.requestPermission(opts)) === "granted";
+}
+function updateFolderUI() {
+  const t = document.getElementById("folderStatusText"), b = document.getElementById("folderConnectBtn");
+  if (!folderSupported) { t.textContent="Auto-save needs Chrome/Edge."; b.style.display="none"; return; }
+  if (folderHandle) { t.textContent=`Auto-saving to: "${folderHandle.name}"`; b.textContent="Change folder"; }
+  else { t.textContent="Not connected."; b.textContent="Choose folder"; }
+}
+async function chooseFolder() {
+  if (!folderSupported) return;
+  try {
+    const h = await window.showDirectoryPicker();
+    if (!(await ensurePerm(h))) { alert("Permission denied."); return; }
+    folderHandle = h; await idbSave(h); updateFolderUI();
+  } catch(e) { if (e.name !== "AbortError") alert("Couldn't connect: "+e.message); }
+}
+async function restoreFolder() {
+  if (!folderSupported) { updateFolderUI(); return; }
+  const h = await idbGet();
+  if (h && (await ensurePerm(h))) folderHandle = h;
+  updateFolderUI();
+}
+async function writeToFolder(filename, content) {
+  if (!folderHandle || !(await ensurePerm(folderHandle))) return false;
+  try {
+    const fh = await folderHandle.getFileHandle(filename, {create:true});
+    const w = await fh.createWritable(); await w.write(content); await w.close(); return true;
+  } catch { return false; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DOWNLOAD HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function buildStandaloneDoc(inner) {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Purity Events Contract</title>
+<style>body{font-family:Georgia,serif;color:#222;line-height:1.7;max-width:800px;margin:40px auto;padding:0 24px;}
+h2{font-family:Georgia,serif;text-align:center;}
+.sub-center{text-align:center;color:#555;font-size:.85rem;margin-bottom:20px;}
+h3{font-size:1rem;border-bottom:1px solid #ddd;padding-bottom:4px;margin-top:26px;}
+table{width:100%;border-collapse:collapse;margin:10px 0;}
+th,td{border:1px solid #ccc;padding:6px 8px;font-size:.87rem;}
+.sign-block{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;}
+.sign-line{border-top:1px solid #333;margin-top:40px;padding-top:4px;font-size:.8rem;color:#555;}
+</style></head><body>${inner}</body></html>`;
+}
+function triggerDownload(filename, content) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([content],{type:"text/html"}));
+  a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+function downloadCurrentRecord() {
+  triggerDownload(currentRecordFilename, buildStandaloneDoc(currentContractHTML));
+}
+function downloadRecordById(id) {
+  const r = loadRecords().find(r=>r.id===id); if (!r) return;
+  triggerDownload(r.filename, buildStandaloneDoc(r.html));
+}
+function makeFilename(name, date) {
+  return (name||"client").replace(/[^a-z0-9]+/gi,"-").replace(/^-+|-+$/g,"") + "_" + (date||"no-date") + ".html";
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORM HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+function fillSelect(el, opts) {
+  el.innerHTML = opts.map(o=>`<option value="${o}">${o}</option>`).join("");
+}
+
+/* ---- Items table ---- */
+function addItemRow(prefill) {
+  itemRowCount++;
+  const id = "ir-" + itemRowCount;
+  const opts = DEFAULT_CONFIG.itemOptions.map(o=>`<option value="${o}">${o}</option>`).join("");
+  const tr = document.createElement("tr"); tr.id = id;
+  tr.innerHTML = `
+    <td><select class="item-name">${opts}</select></td>
+    <td><input type="number" class="item-qty" min="1" value="1" /></td>
+    <td><input type="text" class="item-notes" placeholder="color, size…" /></td>
+    <td><button type="button" class="row-remove" onclick="document.getElementById('${id}').remove()">✕</button></td>`;
+  document.getElementById("itemsTbody").appendChild(tr);
+  if (prefill) {
+    if (prefill.name) tr.querySelector(".item-name").value = prefill.name;
+    if (prefill.qty) tr.querySelector(".item-qty").value = prefill.qty;
+    if (prefill.notes) tr.querySelector(".item-notes").value = prefill.notes;
+  }
+}
+function readItemRows() {
+  return Array.from(document.querySelectorAll("#itemsTbody tr")).map(r => ({
+    name: r.querySelector(".item-name").value,
+    qty: r.querySelector(".item-qty").value,
+    notes: r.querySelector(".item-notes").value
+  }));
+}
+
+/* ---- Custom sections ---- */
+function addCustomSection(prefill) {
+  csRowCount++;
+  const id = "cs-" + csRowCount;
+  const div = document.createElement("div");
+  div.className = "custom-section-row"; div.id = id;
+  div.draggable = true;
+  div.addEventListener("dragstart", e => { csDragItem = id; e.dataTransfer.effectAllowed = "move"; });
+  div.addEventListener("dragover", e => { e.preventDefault(); div.classList.add("drag-over"); });
+  div.addEventListener("dragleave", () => div.classList.remove("drag-over"));
+  div.addEventListener("drop", e => {
+    e.preventDefault(); div.classList.remove("drag-over");
+    if (!csDragItem || csDragItem === id) return;
+    const from = document.getElementById(csDragItem);
+    const list = document.getElementById("customSectionsList");
+    const allRows = Array.from(list.children);
+    const fromIdx = allRows.indexOf(from), toIdx = allRows.indexOf(div);
+    if (fromIdx < toIdx) list.insertBefore(from, div.nextSibling);
+    else list.insertBefore(from, div);
+    csDragItem = null;
+  });
+  div.innerHTML = `
+    <div class="cs-header">
+      <span class="cs-handle">⠿</span>
+      <input type="text" class="cs-title" placeholder="Section title (e.g. 'Additional Terms')" value="${prefill?.title||""}" style="font-weight:600;" />
+      <button type="button" class="row-remove" onclick="document.getElementById('${id}').remove()" title="Remove section">✕</button>
+    </div>
+    <textarea class="cs-content" placeholder="Section content…" style="min-height:80px;">${prefill?.content||""}</textarea>`;
+  document.getElementById("customSectionsList").appendChild(div);
+}
+function readCustomSections() {
+  return Array.from(document.querySelectorAll("#customSectionsList .custom-section-row")).map(row => ({
+    title: row.querySelector(".cs-title").value.trim(),
+    content: row.querySelector(".cs-content").value.trim()
+  })).filter(s => s.title || s.content);
+}
+
+/* ---- Simple field IDs ---- */
+const SIMPLE_IDS = [
+  "clientName","clientPhone","clientEmail","eventTypeSelect","venueName","venueAddress",
+  "eventDate","eventStart","decorDate","decorSetupTime","decorPickupDate","decorPickupTime",
+  "decorPackage","colorPalette","inspoNote","roleText",
+  "totalPrice","depositType","depositValue","balanceDueDate","overtimeRate","travelFee",
+  "clauseDeposit","clauseFinalPayment","clauseOvertime","clauseDamage","clauseLiability"
+];
+
+function collectFormData() {
+  const data = { contractType: getCurrentType(), items: readItemRows(), customSections: readCustomSections() };
+  SIMPLE_IDS.forEach(id => { const el = document.getElementById(id); if (el) data[id] = el.value; });
+  return data;
+}
+
+function populateFormData(data) {
+  setContractType(data.contractType || "large");
+  SIMPLE_IDS.forEach(id => { const el = document.getElementById(id); if (el && data[id] !== undefined) el.value = data[id]; });
+  updateDepositLabel();
+  document.getElementById("itemsTbody").innerHTML = ""; itemRowCount = 0;
+  (data.items?.length ? data.items : [{}]).forEach(addItemRow);
+  document.getElementById("customSectionsList").innerHTML = ""; csRowCount = 0;
+  (data.customSections || []).forEach(addCustomSection);
+}
+
+function resetForm() {
+  currentEditingId = null;
+  setContractType("large");
+  SIMPLE_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  document.getElementById("roleText").value = DEFAULT_CONFIG.clauses.defaultRole;
+  document.getElementById("clauseDeposit").value = DEFAULT_CONFIG.clauses.deposit;
+  document.getElementById("clauseFinalPayment").value = DEFAULT_CONFIG.clauses.finalPayment;
+  document.getElementById("clauseOvertime").value = DEFAULT_CONFIG.clauses.overtime;
+  document.getElementById("clauseDamage").value = DEFAULT_CONFIG.clauses.damage;
+  document.getElementById("clauseLiability").value = DEFAULT_CONFIG.clauses.liability;
+  document.getElementById("depositType").value = "percent";
+  document.getElementById("depositValue").value = "30";
+  updateDepositLabel();
+  document.getElementById("itemsTbody").innerHTML = ""; itemRowCount = 0;
+  addItemRow();
+  document.getElementById("customSectionsList").innerHTML = ""; csRowCount = 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORMATTERS
+   ═══════════════════════════════════════════════════════════════════ */
+function money(n) { return "$"+(Number(n)||0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function friendlyDate(iso) {
+  if (!iso) return "____________";
+  const [y,m,d] = iso.split("-").map(Number);
+  return new Date(y,m-1,d).toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+}
+function friendlyTime(t) {
+  if (!t) return "______";
+  const [h,m] = t.split(":").map(Number);
+  return `${((h+11)%12)+1}:${String(m).padStart(2,"0")} ${h>=12?"PM":"AM"}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BUILD CONTRACT HTML
+   ═══════════════════════════════════════════════════════════════════ */
+function buildContractHTML(type) {
+  const isLarge = type === "large";
+  const v = id => document.getElementById(id)?.value || "";
+
+  const clientName   = v("clientName") || "____________";
+  const clientPhone  = v("clientPhone") || "____________";
+  const clientEmail  = v("clientEmail") || "____________";
+  const eventType    = v("eventTypeSelect");
+  const venueName    = v("venueName") || "____________";
+  const venueAddress = v("venueAddress") || "____________";
+  const eventDate    = friendlyDate(v("eventDate"));
+  const eventStart   = friendlyTime(v("eventStart"));
+  const decorDate    = friendlyDate(v("decorDate"));
+  const decorSetup   = friendlyTime(v("decorSetupTime"));
+  const pickupDate   = friendlyDate(v("decorPickupDate"));
+  const pickupTime   = friendlyTime(v("decorPickupTime"));
+  const decorPkg     = v("decorPackage");
+  const palette      = v("colorPalette") || "____________";
+  const inspo        = v("inspoNote");
+  const roleText     = v("roleText");
+
+  const total        = Number(v("totalPrice")) || 0;
+  const depType      = v("depositType");
+  const depVal       = Number(v("depositValue")) || 0;
+  const balDue       = friendlyDate(v("balanceDueDate"));
+  const overtime     = Number(v("overtimeRate")) || 0;
+  const travel       = Number(v("travelFee")) || 0;
+  const depAmt       = depType === "percent" ? total * depVal / 100 : depVal;
+  const balance      = Math.max(total - depAmt, 0);
+
+  const items = readItemRows();
+  const itemsHTML = items.length
+    ? items.map(it=>`<tr><td>${it.name}</td><td>${it.qty}</td><td>${it.notes||"—"}</td></tr>`).join("")
+    : `<tr><td colspan="3">No items listed</td></tr>`;
+
+  const clauseDeposit = (v("clauseDeposit") || DEFAULT_CONFIG.clauses.deposit).replace("{{depositAmount}}", money(depAmt));
+  const clauseBalance = (v("clauseFinalPayment") || DEFAULT_CONFIG.clauses.finalPayment)
+    .replace("{{balanceAmount}}", money(balance)).replace("{{balanceDueDate}}", balDue);
+  const clauseOT = (v("clauseOvertime") || DEFAULT_CONFIG.clauses.overtime).replace("{{overtimeRate}}", money(overtime));
+  const clauseDmg = v("clauseDamage") || DEFAULT_CONFIG.clauses.damage;
+  const clauseLiab = v("clauseLiability") || DEFAULT_CONFIG.clauses.liability;
+
+  // Custom sections — numbered after the fixed ones (fixed end at 7)
+  const customSecs = readCustomSections();
+  const customHTML = customSecs.map((s, i) => `
+    <h3>${8 + i}. ${s.title || "Additional Terms"}</h3>
+    <p>${s.content}</p>`).join("");
+
+  const sigNum = 8 + customSecs.length;
+
+  return `
+    <h2>${isLarge ? "Wedding" : "Event"} Decor Services Agreement</h2>
+    <p class="sub-center">Purity Events — Where your story finds its setting</p>
+
+    <h3>1. Parties &amp; Event</h3>
+    <p>This agreement is made between <strong>Purity Events</strong> ("Vendor") and <strong>${clientName}</strong> ("Client") for decor services at the following event:</p>
+    <table>
+      <tr><th>Event type</th><td>${eventType}</td></tr>
+      <tr><th>Event date</th><td>${eventDate}</td></tr>
+      <tr><th>Venue</th><td>${venueName} — ${venueAddress}</td></tr>
+      <tr><th>Client phone</th><td>${clientPhone}</td></tr>
+      <tr><th>Client email</th><td>${clientEmail}</td></tr>
+    </table>
+
+    <h3>2. Timing</h3>
+    <table>
+      <tr><th>Event date</th><td>${eventDate}</td></tr>
+      <tr><th>Event start time</th><td>${eventStart}</td></tr>
+      <tr><th>Decor set-up</th><td>${decorDate} at ${decorSetup}</td></tr>
+      <tr><th>Decor pick-up</th><td>${pickupDate} at ${pickupTime}</td></tr>
+    </table>
+    <p>${clauseOT}</p>
+
+    <h3>3. Decor Package &amp; Items</h3>
+    <p><strong>Package:</strong> ${decorPkg} &nbsp;|&nbsp; <strong>Color palette / theme:</strong> ${palette}</p>
+    ${isLarge ? `<p><strong>Agreed inspiration photos:</strong> ${inspo||"____________"}</p>` : ""}
+    <table>
+      <thead><tr><th>Item</th><th>Qty</th><th>Notes / color</th></tr></thead>
+      <tbody>${itemsHTML}</tbody>
+    </table>
+
+    <h3>4. Role &amp; Responsibilities</h3>
+    <p>${roleText}</p>
+
+    <h3>5. Pricing &amp; Payment</h3>
+    <table>
+      <tr><th>Total price</th><td>${money(total)}</td></tr>
+      <tr><th>Deposit (non-refundable)</th><td>${money(depAmt)}${depType==="percent"?` (${depVal}%)`:""}</td></tr>
+      <tr><th>Remaining balance</th><td>${money(balance)}</td></tr>
+      <tr><th>Balance due date</th><td>${balDue}</td></tr>
+      ${travel ? `<tr><th>Travel / delivery fee</th><td>${money(travel)}</td></tr>` : ""}
+    </table>
+    <p>${clauseDeposit}</p>
+    <p>${clauseBalance}</p>
+
+    <h3>6. Care of Decor &amp; Damage</h3>
+    <p>${clauseDmg}</p>
+
+    <h3>7. Liability</h3>
+    <p>${clauseLiab}</p>
+
+    ${customHTML}
+
+    <h3>${sigNum}. Signatures</h3>
+    <div class="sign-block">
+      <div><div class="sign-line">Client Signature — Date</div></div>
+      <div><div class="sign-line">Purity Events Representative — Date</div></div>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EDIT MODE — makes every text node in the preview directly editable
+   ═══════════════════════════════════════════════════════════════════ */
+function toggleEditMode() {
+  const preview = document.getElementById("contractPreview");
+  const btn = document.getElementById("toggleEditBtn");
+  const banner = document.getElementById("editBanner");
+  editModeActive = !editModeActive;
+
+  if (editModeActive) {
+    // Make every paragraph, td, th, h3 contenteditable
+    preview.querySelectorAll("p, td, th, h2, h3, .sub-center").forEach(el => {
+      el.setAttribute("contenteditable", "true");
+      el.setAttribute("spellcheck", "true");
+    });
+    preview.classList.add("edit-mode");
+    btn.textContent = "✓ Done Editing";
+    btn.className = "btn btn-primary";
+    banner.classList.add("visible");
+  } else {
+    preview.querySelectorAll("[contenteditable]").forEach(el => el.removeAttribute("contenteditable"));
+    preview.classList.remove("edit-mode");
+    btn.textContent = "✏️ Edit Contract Text";
+    btn.className = "btn btn-ghost";
+    banner.classList.remove("visible");
+    // Capture edited HTML so Download/Save uses the edited version
+    currentContractHTML = preview.innerHTML;
+    if (currentEditingId) {
+      const records = loadRecords();
+      const idx = records.findIndex(r => r.id === currentEditingId);
+      if (idx > -1) { records[idx].html = currentContractHTML; persistRecords(records); }
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   EVENTS
+   ═══════════════════════════════════════════════════════════════════ */
+function setContractType(type) {
+  document.body.classList.toggle("type-large", type==="large");
+  document.getElementById("btnTypeLarge").classList.toggle("active", type==="large");
+  document.getElementById("btnTypeSmall").classList.toggle("active", type==="small");
+}
+function getCurrentType() { return document.body.classList.contains("type-large") ? "large" : "small"; }
+
+function autofillBalanceDate() {
+  const v = document.getElementById("eventDate").value; if (!v) return;
+  const d = new Date(v+"T00:00:00"); d.setDate(d.getDate()-7);
+  document.getElementById("balanceDueDate").value = d.toISOString().split("T")[0];
+}
+
+function updateDepositLabel() {
+  const lbl = document.getElementById("depositValueLabel");
+  lbl.textContent = document.getElementById("depositType").value==="percent" ? "Deposit % (default 30)" : "Deposit amount ($)";
+}
+document.getElementById("depositType").addEventListener("change", updateDepositLabel);
+
+async function generateContract() {
+  if (editModeActive) toggleEditMode();
+  const type = getCurrentType();
+  const html = buildContractHTML(type);
+  currentContractHTML = html;
+  document.getElementById("contractPreview").innerHTML = html;
+  document.getElementById("formSection").style.display = "none";
+  document.getElementById("previewSection").style.display = "block";
+  window.scrollTo(0,0);
+
+  const clientName = document.getElementById("clientName").value;
+  const dateIso = document.getElementById("eventDate").value;
+  const total = Number(document.getElementById("totalPrice").value)||0;
+  currentRecordFilename = makeFilename(clientName, dateIso);
+
+  currentEditingId = upsertRecord({
+    id: currentEditingId, clientName,
+    eventDate: friendlyDate(dateIso), contractType: type, totalPrice: total,
+    html, filename: currentRecordFilename, formData: collectFormData()
+  });
+
+  const note = document.getElementById("autoSaveNote");
+  if (folderHandle) {
+    const ok = await writeToFolder(currentRecordFilename, buildStandaloneDoc(html));
+    note.textContent = ok ? `Auto-saved to "${folderHandle.name}" as ${currentRecordFilename}.` : `Couldn't write to folder — use Download.`;
+  } else {
+    note.textContent = `Saved to browser log. Use Download to save a file copy.`;
+  }
+}
+
+function backToForm() {
+  if (editModeActive) toggleEditMode();
+  document.getElementById("previewSection").style.display = "none";
+  document.getElementById("formSection").style.display = "block";
+}
+
+function startNewContract() {
+  if (editModeActive) toggleEditMode();
+  resetForm();
+  document.getElementById("previewSection").style.display = "none";
+  document.getElementById("formSection").style.display = "block";
+  window.scrollTo(0,0);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
+fillSelect(document.getElementById("eventTypeSelect"), DEFAULT_CONFIG.eventTypes);
+fillSelect(document.getElementById("decorPackage"), DEFAULT_CONFIG.decorPackages);
+document.getElementById("roleText").value = DEFAULT_CONFIG.clauses.defaultRole;
+document.getElementById("clauseDeposit").value = DEFAULT_CONFIG.clauses.deposit;
+document.getElementById("clauseFinalPayment").value = DEFAULT_CONFIG.clauses.finalPayment;
+document.getElementById("clauseOvertime").value = DEFAULT_CONFIG.clauses.overtime;
+document.getElementById("clauseDamage").value = DEFAULT_CONFIG.clauses.damage;
+document.getElementById("clauseLiability").value = DEFAULT_CONFIG.clauses.liability;
+addItemRow();
+renderSavedList();
+renderTemplateSelect();
+restoreFolder();
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import VisionBoard from './pages/VisionBoard.jsx';
 import ClientLogin from './pages/ClientLogin.jsx';
 import ClientDashboard from './pages/ClientDashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import AdminEventRecords from './pages/AdminEventRecords.jsx';
 
 // Protected route — redirects to login if not authenticated
 const ProtectedRoute = ({ children }) => {
@@ -78,6 +79,14 @@ function AppRoutes() {
           element={
             <AdminRoute>
               <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/event-records"
+          element={
+            <AdminRoute>
+              <AdminEventRecords />
             </AdminRoute>
           }
         />

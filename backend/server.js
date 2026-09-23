@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const bookingRoutes = require('./routes/bookings');
 const galleryRoutes = require('./routes/gallery');
 const clientRoutes = require('./routes/clients');
+const eventRecordRoutes = require('./routes/eventRecords');
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/gallery', galleryRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/event-records', eventRecordRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

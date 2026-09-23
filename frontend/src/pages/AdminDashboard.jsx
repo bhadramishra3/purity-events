@@ -532,6 +532,7 @@ export default function AdminDashboard() {
             <p className="font-sans text-white/50 text-sm mt-1">Columbus, Ohio</p>
           </div>
           <div className="flex items-center gap-3">
+            <Link to="/admin/event-records" className="font-sans text-xs bg-gold-600 text-white px-3 py-1.5 rounded-full hover:bg-gold-700 transition-colors">📊 Event Records</Link>
             <Link to="/" className="font-sans text-xs text-white/60 hover:text-white transition-colors">View Site</Link>
             <button onClick={() => logout()} className="font-sans text-xs text-white/60 hover:text-white transition-colors">Sign Out</button>
           </div>
@@ -710,7 +711,15 @@ export default function AdminDashboard() {
               </div>
               <hr className="border-cream-200" />
               <div>
-                <h4 className="font-serif text-base text-charcoal mb-2">3. Configure OAuth</h4>
+                <h4 className="font-serif text-base text-charcoal mb-2">3. Contract Builder</h4>
+                <p className="font-sans text-sm text-gray-500 mb-3">Open the internal contract builder to generate a print-ready PDF contract for any client.</p>
+                <a href="/contract-builder.html" target="_blank" rel="noopener noreferrer" className="btn-gold text-sm py-2 px-6 inline-block">
+                  Open Contract Builder ↗
+                </a>
+              </div>
+              <hr className="border-cream-200" />
+              <div>
+                <h4 className="font-serif text-base text-charcoal mb-2">4. Configure OAuth</h4>
                 <p className="font-sans text-sm text-gray-500">Update your .env files with your Google and Facebook OAuth credentials to enable social login.</p>
                 <ul className="font-sans text-xs text-gray-400 mt-2 space-y-1 list-disc list-inside">
                   <li>Google: console.cloud.google.com</li>
